@@ -20,7 +20,8 @@ for filename in $@; do \
 				if [[ -a $sourcefile ]] ; then \
 					echo "file exists.. ok"
 				else \
-					echo "$sourcefile" 1>&2
+					authority=$(grep -i '# Authority:' $filename | sed 's/.*Authority\: *//g;')
+					echo "${filename}(${authority}) needs $sourcefile" 1>&2
 				fi 
 			fi
 		fi
