@@ -39,6 +39,18 @@ sub checkCleanSection {
 	}
 }
 
+sub checkRmRfBeforeInstall {
+	my $METHOD_NAME = "checkRmRfBeforeInstall - ";
+	my ($filename, $filecontents) = @_;
+	debug($METHOD_NAME . "start, filename=" . $filename);
+	if ($filecontents =~ /\%install\n\%\{__rm\} \-rf \%\{buildroot\}/) {
+		debug($METHOD_NAME . "install section starts with rm rf, ok");
+	} else {
+		print stderr $filename . " : install section does not start with rm rf\n";
+		$specproblems{$filename} = 1;
+	}
+}
+
 sub checkNoLcMessagesInFilesSection {
 	my $METHOD_NAME = "checkNoLcMessagesInFilesSection - ";
 	my ($filename, $filecontents) = @_;
@@ -163,6 +175,7 @@ sub checkSpec {
 	checkLineLength($filename, $filecontents);
 	checkOnlyMacrosInFiles($filename, $filecontents);
 	checkDefattrLines($filename, $filecontents);
+	checkRmRfBeforeInstall($filename, $filecontents);
 	checkMacros($filename, $filecontents);
 }
 
