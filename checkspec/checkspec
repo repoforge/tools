@@ -34,7 +34,7 @@ sub checkCleanSection {
 	if ($filecontents =~ /\%clean\n\%\{__rm\} \-rf \%\{buildroot\}/) {
 		debug($METHOD_NAME . "clean section ok");
 	} else {
-		print stderr $filename . ": %clean section not ok\n";
+		print stderr $filename . " : %clean section not ok\n";
 		$specproblems{$filename} = 1;
 	}
 }
@@ -44,12 +44,27 @@ sub checkNoLcMessagesInFilesSection {
 	my ($filename, $filecontents) = @_;
 	debug($METHOD_NAME . "start, filename=" . $filename);
 	# get the %files part of the spec file
-	$filecontents =~ s/.*\%files//g;
+	$filecontents =~ s/.*\%files//gs;
 	debug($METHOD_NAME . "files sections: \n##### START #####\n" . $filecontents . "##### END #####");
 	if (!($filecontents =~ /LC_MESSAGES/)) {
 		debug($METHOD_NAME . "LC_MESSAGES in %files not found, ok");
 	} else {
-		print stderr $filename . ": contains LC_MESSAGES in %files section\n";
+		print stderr $filename . " : contains LC_MESSAGES in %files section\n";
+		$specproblems{$filename} = 1;
+	}
+}
+
+sub checkOnlyMacrosInFiles {
+	my $METHOD_NAME = "checkOnlyMacrosInFiles - ";
+	my ($filename, $filecontents) = @_;
+	debug($METHOD_NAME . "start, filename=" . $filename);
+	# get the %files part of the spec file
+	$filecontents =~ s/.*\%files//gs;
+	debug($METHOD_NAME . "files sections: \n##### START #####\n" . $filecontents . "##### END #####");
+	if (!($filecontents =~ /\n\//)) {
+		debug($METHOD_NAME . "no line after %files which starts with a slash, ok");
+	} else {
+		print stderr $filename . " : contains lines which start with a slash in %files section\n";
 		$specproblems{$filename} = 1;
 	}
 }
@@ -59,7 +74,7 @@ sub checkMacros {
 	my ($filename, $filecontents) = @_;
         debug($METHOD_NAME . "start, filename=" . $filename);
 	if ($filecontents =~ /^[ \t]*install/gm) {
-		print stderr $filename . ": contains install, should be \%\{__install\}\n";
+		print stderr $filename . " : contains install, should be \%\{__install\}\n";
 		$specproblems{$filename} = 1;
 	} else {
 		debug($METHOD_NAME . "checkMacros ok");
@@ -73,10 +88,62 @@ sub checkBuildRoot {
 	if ($filecontents =~ /^BuildRoot: \%\{\_tmppath\}\/\%\{name\}\-\%\{version\}\-\%\{release\}\-root$/gm) {
 		debug($METHOD_NAME . "buildroot ok");
 	} else {
-		print stderr $filename . ": buildroot not ok\n";
+		print stderr $filename . " : buildroot not ok\n";
 		$specproblems{$filename} = 1;
 	}
 	# BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
+}
+
+sub checkLineLength {
+	my $METHOD_NAME = "checkLineLength - ";
+	my ($filename, $filecontents) = @_;
+	debug($METHOD_NAME . "start, filename=" . $filename);
+	my @lines = split("\n", $filecontents);
+	my $line;
+	foreach $line (@lines) {
+		if (length($line) > 80) {
+			if (!($line =~ /^Source[0-9]*:/) 
+			&& !($line =~/^# Screenshot/)
+			&& !($line =~/^\%define/)) {
+				print stderr $filename . " : line too long, line: " . $line . "\n";
+				$specproblems{$filename} = 1;
+			}
+		}
+	}
+}
+
+sub checkDefattrLines {
+# %defattr(-,root,root,0755)
+	my $METHOD_NAME = "checkDefattrLines - ";
+	my ($filename, $filecontents) = @_;
+	debug($METHOD_NAME . "start, filename=" . $filename);
+	my @lines = split("\n", $filecontents);
+	my $line;
+	my $lastlineWasFilesLine = 0;
+	foreach $line (@lines) {
+		debug($METHOD_NAME . "lastlineWasFilesLine=" . $lastlineWasFilesLine . ",line=" . $line);
+		if ($line =~ /^\%files/) {
+			$lastlineWasFilesLine = 1;
+			next;
+		}
+		debug($METHOD_NAME . "lastlineWasFilesLine is now " . $lastlineWasFilesLine);
+		if ($lastlineWasFilesLine) {
+			if ($line =~ /^%defattr\(([0-9a-zA-Z -]*),([0-9a-zA-Z -]*),([0-9a-zA-Z -]*),([0-9a-zA-Z -]*)\)/) {
+				if (!($line =~ /^%defattr\(([0-9a-zA-Z-]*), ([0-9a-zA-Z-]*), ([0-9a-zA-Z-]*), ([0-9a-zA-Z-]*)\)/)) {
+					print stderr $filename . " : spaces not ok in defattr, line= " . $line . "\n";
+				}
+				$lastlineWasFilesLine = 0;				
+				next;
+			}
+			if ($line =~ /^%defattr\(([0-9a-zA-Z -]*),([0-9a-zA-Z -]*),([0-9a-zA-Z -]*)\)/) {
+				print stderr $filename . " : no chmod mode at end of defattr, line= " . $line . "\n";
+				$lastlineWasFilesLine = 0;
+				next;
+			}
+			print stderr $filename . " : no defattr line after files section\n";
+			$lastlineWasFilesLine = 0;
+		}
+	}
 }
 
 sub checkSpec {
@@ -93,6 +160,9 @@ sub checkSpec {
 	checkCleanSection($filename, $filecontents);
 	checkNoLcMessagesInFilesSection($filename, $filecontents);
 	checkBuildRoot($filename, $filecontents);
+	checkLineLength($filename, $filecontents);
+	checkOnlyMacrosInFiles($filename, $filecontents);
+	checkDefattrLines($filename, $filecontents);
 	checkMacros($filename, $filecontents);
 }
 
