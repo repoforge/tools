@@ -1,0 +1,102 @@
+#!/usr/bin/perl -W
+
+use strict;
+
+
+# Usage: checkspec specfile1 specfile2 ...
+
+# This small script does some checks on spec files to avoid errors which i
+# make a lot like forgetting the %clean section
+# Currently it checks the following:
+#   * %clean section
+#   * no LC_MESSAGES in %files section
+#   * no 'install ' but %{__install}
+
+# Feel free to add checks if you like
+
+my $DEBUG = 0;
+
+my %specproblems = ();
+
+sub debug {
+	my $line = pop;
+	if ($DEBUG) {
+		print $line . "\n";
+	}
+}
+
+
+sub checkCleanSection {
+	my $METHOD_NAME = "checkCleanSection - ";
+	my ($filename, $filecontents) = @_;
+	debug($METHOD_NAME . "start, filename=" . $filename);
+	if ($filecontents =~ /\%clean\n\%\{__rm\} \-rf \%\{buildroot\}/) {
+		debug($METHOD_NAME . "clean section ok");
+	} else {
+		print stderr $filename . ": %clean section not ok\n";
+		$specproblems{$filename} = 1;
+	}
+}
+
+sub checkNoLcMessagesInFilesSection {
+	my $METHOD_NAME = "checkNoLcMessagesInFilesSection - ";
+	my ($filename, $filecontents) = @_;
+	debug($METHOD_NAME . "start, filename=" . $filename);
+	# get the %files part of the spec file
+	$filecontents =~ s/.*\%files//g;
+	debug($METHOD_NAME . "files sections: \n##### START #####\n" . $filecontents . "##### END #####");
+	if (!($filecontents =~ /LC_MESSAGES/)) {
+		debug($METHOD_NAME . "LC_MESSAGES in %files not found, ok");
+	} else {
+		print stderr $filename . ": contains LC_MESSAGES in %files section\n";
+		$specproblems{$filename} = 1;
+	}
+}
+
+sub checkMacros {
+	my $METHOD_NAME = "checkMacros - ";
+	my ($filename, $filecontents) = @_;
+        debug($METHOD_NAME . "start, filename=" . $filename);
+	if ($filecontents =~ /^[ \t]*install/gm) {
+		print stderr $filename . ": contains install, should be \%\{__install\}\n";
+		$specproblems{$filename} = 1;
+	} else {
+		debug($METHOD_NAME . "checkMacros ok");
+	}
+}
+
+sub checkSpec {
+	my $METHOD_NAME = "checkSpec - ";
+	my $filename = pop;
+	debug($METHOD_NAME . "start, filename is " . $filename);
+	my $filecontents = "";
+	open(FILE, "<$filename") or die "could not open file " . $filename;
+	while (<FILE>) {
+		$filecontents = $filecontents . $_;
+	}
+	close FILE;
+	debug("filecontents is: \n#### START ####\n" . $filecontents . "#### END ####");
+	checkCleanSection($filename, $filecontents);
+	checkNoLcMessagesInFilesSection($filename, $filecontents);
+	checkMacros($filename, $filecontents);
+}
+
+sub printJoeLine {
+	my $line = "";
+	my $name;
+	foreach $name (keys %specproblems) {
+		chomp $name;
+		$line = $line . " " . $name;
+	}
+	print stderr "joe " . $line . "\n";
+}
+
+
+my @filenames = @ARGV;
+
+my $fname;
+foreach $fname (sort @filenames) {
+#	print $fname . "\n";
+	checkSpec $fname;
+}
+printJoeLine;
