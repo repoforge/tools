@@ -1,0 +1,28 @@
+
+
+# capture stderr for the real errors
+# other output is some debugging info
+
+# usage: checkmissingfiles specfile1 specfile2 ...
+
+for filename in $@; do \
+	echo filename is $filename
+	for sourceline in `spectool $filename | sed 's/Source[0-9]*\://g;' | sed 's/Patch[0-9]*\://g;'`; do \
+		if [[ ${sourceline:0:7}  == "http://" ]] ; then \
+			echo "http links not checked"
+		else \
+			if [[ ${sourceline:0:6} == "ftp://" ]] ; then \
+				echo "ftp links not checked"
+			else \
+				echo non http sourceline is $sourceline
+				sourcefile=`dirname $filename`/$sourceline
+				echo sourcefile is $sourcefile
+				if [[ -a $sourcefile ]] ; then \
+					echo "file exists.. ok"
+				else \
+					echo "$sourcefile" 1>&2
+				fi 
+			fi
+		fi
+	done
+done
