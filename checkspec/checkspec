@@ -10,6 +10,7 @@ use strict;
 # Currently it checks the following:
 #   * %clean section
 #   * no LC_MESSAGES in %files section
+#   * correct buildroot
 #   * no 'install ' but %{__install}
 
 # Feel free to add checks if you like
@@ -65,6 +66,19 @@ sub checkMacros {
 	}
 }
 
+sub checkBuildRoot {
+	my $METHOD_NAME = "checkBuildRoot - ";
+	my ($filename, $filecontents) = @_;
+	debug($METHOD_NAME . "start, filename=" . $filename);
+	if ($filecontents =~ /^BuildRoot: \%\{\_tmppath\}\/\%\{name\}\-\%\{version\}\-\%\{release\}\-root$/gm) {
+		debug($METHOD_NAME . "buildroot ok");
+	} else {
+		print stderr $filename . ": buildroot not ok\n";
+		$specproblems{$filename} = 1;
+	}
+	# BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
+}
+
 sub checkSpec {
 	my $METHOD_NAME = "checkSpec - ";
 	my $filename = pop;
@@ -78,6 +92,7 @@ sub checkSpec {
 	debug("filecontents is: \n#### START ####\n" . $filecontents . "#### END ####");
 	checkCleanSection($filename, $filecontents);
 	checkNoLcMessagesInFilesSection($filename, $filecontents);
+	checkBuildRoot($filename, $filecontents);
 	checkMacros($filename, $filecontents);
 }
 
