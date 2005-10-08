@@ -33,11 +33,17 @@ sub checkDocInAlphabeticalOrder {
 	my @lines = split("\n", $filecontents);
 	my $line;
 	foreach $line (@lines) {
-		if ($line =~ /^%doc (.*)/) {
+		#print STDERR "doc line? " . $line;
+		if ($line =~ /^\%doc (.*)/) {
 			my $filenamesString = $1;
 			my @filenames = split(" ", $filenamesString);
-			my @filenamesSorted = sort(@filenames);
-			TODO
+			my @filenamesSorted = sort {uc($a) cmp uc($b)} @filenames;
+			my $filenamesStringSorted = join(" ", @filenamesSorted);
+			#print STDERR "orig doc line: " . $filenamesString . ",sorted: " . $filenamesStringSorted . "\n";
+			if (!($filenamesStringSorted eq $filenamesString)) {
+				print STDERR $filename . " : doc line not sorted alphabetically, orig doc line: " . $filenamesString . ",sorted: " . $filenamesStringSorted . "\n";
+				$specproblems{$filename} = 1;
+			}
 		}
 	}
 }
@@ -205,6 +211,7 @@ sub checkSpec {
 	checkRmRfBeforeInstall($filename, $filecontents);
 	checkMacros($filename, $filecontents);
 	checkChangelog($filename, $filecontents);
+	checkDocInAlphabeticalOrder($filename, $filecontents);
 }
 
 sub printJoeLine {
