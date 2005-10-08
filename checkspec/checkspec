@@ -26,6 +26,33 @@ sub debug {
 	}
 }
 
+sub checkDocInAlphabeticalOrder {
+	my $METHOD_NAME = "checkDocInAlphabeticalOrder - ";
+	my ($filename, $filecontents) = @_;
+	debug($METHOD_NAME . "start, filename=" . $filename);
+	my @lines = split("\n", $filecontents);
+	my $line;
+	foreach $line (@lines) {
+		if ($line =~ /^%doc (.*)/) {
+			my $filenamesString = $1;
+			my @filenames = split(" ", $filenamesString);
+			my @filenamesSorted = sort(@filenames);
+			TODO
+		}
+	}
+}
+
+sub checkChangelog {
+	my $METHOD_NAME = "checkChangelog - ";
+	my ($filename, $filecontents) = @_;
+	debug($METHOD_NAME . "start, filename=" . $filename);
+	if ($filecontents =~ /%changelog\n/) {
+		debug($METHOD_NAME . "changelog line ok");
+	} else {
+		print STDERR $filename . " : changelog section not ok\n";
+		$specproblems{$filename} = 1;
+	}
+}
 
 sub checkCleanSection {
 	my $METHOD_NAME = "checkCleanSection - ";
@@ -34,7 +61,7 @@ sub checkCleanSection {
 	if ($filecontents =~ /\%clean\n\%\{__rm\} \-rf \%\{buildroot\}/) {
 		debug($METHOD_NAME . "clean section ok");
 	} else {
-		print stderr $filename . " : %clean section not ok\n";
+		print STDERR $filename . " : %clean section not ok\n";
 		$specproblems{$filename} = 1;
 	}
 }
@@ -46,7 +73,7 @@ sub checkRmRfBeforeInstall {
 	if ($filecontents =~ /\%install\n\%\{__rm\} \-rf \%\{buildroot\}/) {
 		debug($METHOD_NAME . "install section starts with rm rf, ok");
 	} else {
-		print stderr $filename . " : install section does not start with rm rf\n";
+		print STDERR $filename . " : install section does not start with rm rf\n";
 		$specproblems{$filename} = 1;
 	}
 }
@@ -61,7 +88,7 @@ sub checkNoLcMessagesInFilesSection {
 	if (!($filecontents =~ /LC_MESSAGES/)) {
 		debug($METHOD_NAME . "LC_MESSAGES in %files not found, ok");
 	} else {
-		print stderr $filename . " : contains LC_MESSAGES in %files section\n";
+		print STDERR $filename . " : contains LC_MESSAGES in %files section\n";
 		$specproblems{$filename} = 1;
 	}
 }
@@ -76,7 +103,7 @@ sub checkOnlyMacrosInFiles {
 	if (!($filecontents =~ /\n\//)) {
 		debug($METHOD_NAME . "no line after %files which starts with a slash, ok");
 	} else {
-		print stderr $filename . " : contains lines which start with a slash in %files section\n";
+		print STDERR $filename . " : contains lines which start with a slash in %files section\n";
 		$specproblems{$filename} = 1;
 	}
 }
@@ -86,7 +113,7 @@ sub checkMacros {
 	my ($filename, $filecontents) = @_;
         debug($METHOD_NAME . "start, filename=" . $filename);
 	if ($filecontents =~ /^[ \t]*install/gm) {
-		print stderr $filename . " : contains install, should be \%\{__install\}\n";
+		print STDERR $filename . " : contains install, should be \%\{__install\}\n";
 		$specproblems{$filename} = 1;
 	} else {
 		debug($METHOD_NAME . "checkMacros ok");
@@ -97,10 +124,10 @@ sub checkBuildRoot {
 	my $METHOD_NAME = "checkBuildRoot - ";
 	my ($filename, $filecontents) = @_;
 	debug($METHOD_NAME . "start, filename=" . $filename);
-	if ($filecontents =~ /^BuildRoot: \%\{\_tmppath\}\/\%\{name\}\-\%\{version\}\-\%\{release\}\-root$/gm) {
+	if ($filecontents =~ /^BuildRoot:\s*\%\{\_tmppath\}\/\%\{name\}\-\%\{version\}\-\%\{release\}\-root$/gm) {
 		debug($METHOD_NAME . "buildroot ok");
 	} else {
-		print stderr $filename . " : buildroot not ok\n";
+		print STDERR $filename . " : buildroot not ok\n";
 		$specproblems{$filename} = 1;
 	}
 	# BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
@@ -117,7 +144,7 @@ sub checkLineLength {
 			if (!($line =~ /^Source[0-9]*:/) 
 			&& !($line =~/^# Screenshot/)
 			&& !($line =~/^\%define/)) {
-				print stderr $filename . " : line too long, line: " . $line . "\n";
+				print STDERR $filename . " : line too long, line: " . $line . "\n";
 				$specproblems{$filename} = 1;
 			}
 		}
@@ -142,17 +169,17 @@ sub checkDefattrLines {
 		if ($lastlineWasFilesLine) {
 			if ($line =~ /^%defattr\(([0-9a-zA-Z -]*),([0-9a-zA-Z -]*),([0-9a-zA-Z -]*),([0-9a-zA-Z -]*)\)/) {
 				if (!($line =~ /^%defattr\(([0-9a-zA-Z-]*), ([0-9a-zA-Z-]*), ([0-9a-zA-Z-]*), ([0-9a-zA-Z-]*)\)/)) {
-					print stderr $filename . " : spaces not ok in defattr, line= " . $line . "\n";
+					print STDERR $filename . " : spaces not ok in defattr, line= " . $line . "\n";
 				}
 				$lastlineWasFilesLine = 0;				
 				next;
 			}
 			if ($line =~ /^%defattr\(([0-9a-zA-Z -]*),([0-9a-zA-Z -]*),([0-9a-zA-Z -]*)\)/) {
-				print stderr $filename . " : no chmod mode at end of defattr, line= " . $line . "\n";
+				print STDERR $filename . " : no chmod mode at end of defattr, line= " . $line . "\n";
 				$lastlineWasFilesLine = 0;
 				next;
 			}
-			print stderr $filename . " : no defattr line after files section\n";
+			print STDERR $filename . " : no defattr line after files section\n";
 			$lastlineWasFilesLine = 0;
 		}
 	}
@@ -177,6 +204,7 @@ sub checkSpec {
 	checkDefattrLines($filename, $filecontents);
 	checkRmRfBeforeInstall($filename, $filecontents);
 	checkMacros($filename, $filecontents);
+	checkChangelog($filename, $filecontents);
 }
 
 sub printJoeLine {
@@ -186,7 +214,7 @@ sub printJoeLine {
 		chomp $name;
 		$line = $line . " " . $name;
 	}
-	print stderr "joe " . $line . "\n";
+	print STDERR "joe " . $line . "\n";
 }
 
 
