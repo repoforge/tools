@@ -16,7 +16,7 @@ wget -c $URL -O $SDIR/$FILE
 grep real_version $1 && exit
 
 sed  -i -e "s/^Version: .*/Version: $2/" \
-	 -e "s/^Release: .*/Release: 1/" \
+	 -e "s/^Release: .*/Release: 1%{?dist}/" \
 	 -e "/^%changelog/ a\* ${DATE} ${USER} - $VERSION-1\n- Updated to version ${VERSION}.\n" $1 
 	
 	
