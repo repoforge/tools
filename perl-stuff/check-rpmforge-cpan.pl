@@ -101,6 +101,9 @@ my $ignore = { 'perl-Yahoo-Photos' => 'ignore',
 				'perl-ExtUtils-CBuilder' => 'ignore', # version
 				'perl-AI-FANN' => 'ignore', # doesn't compile
 				'perl-any' => 'ignore', # version
+				'perl-WebService-MusicBrainz' => 'ignore', # Requires: perl(XML::LibXML) >= 1.63 really..
+				'perl-Test-Class' => 'ignore', # Requires perl(Test::Simple) >= 0.78
+				'perl-XML-Compile' => 'ignore', # req XML::Compile::Tester which requires new Sys::Log
 
 	 };
 
@@ -119,6 +122,7 @@ foreach my $name (@rpmnames) {
 			my $module = CPAN::Shell->expand("Module",$cpan_name);
 			my $cpan_version=0;
 			$cpan_version=$module->cpan_version if ( defined($module) );
+			if ( $cpan_version =~ m/v(.*)/ ) { $cpan_version = $1 };
 			$ok = "UPGRADE" if ( $cpan_version gt $localverison ); 
 			$ok = "OK" if ( $cpan_version eq "undef" ); 
 			printf("%-30.30s | Localversion: %s - %s | Cpanversion %s | %s \n",$cpan_name, $localverison, $release, $cpan_version, $ok);
