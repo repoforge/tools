@@ -4,6 +4,7 @@ set -e
 export LANG=C
 DATE=$(date "+%a %b %e %Y")
 VERSION=$2
+RPMVERSION=`grep  ^Version: $1 | cut -d  ' ' -f 2`
 OUTPUT=$1.new
 NAME=`basename $1 .spec` 
 SDIR=/home/cmr/redhat/SOURCES
@@ -15,10 +16,12 @@ wget -c $URL -O $SDIR/$FILE
 
 grep real_version $1 && exit
 
-sed  -i -e "s/^Version: .*/Version: $2/" \
-	 -e "s/^Release: .*/Release: 1%{?dist}/" \
-	 -e "/^%changelog/ a\* ${DATE} ${USER} - $VERSION-1\n- Updated to version ${VERSION}.\n" $1 
-	
+if [ $VERSION -ne $RPMVERSION ]
+then
+	sed  -i -e "s/^Version: .*/Version: $2/" \
+		 -e "s/^Release: .*/Release: 1%{?dist}/" \
+		 -e "/^%changelog/ a\* ${DATE} ${USER} - $VERSION-1\n- Updated to version ${VERSION}.\n" $1 
+fi	
 	
 echo $URL
 
