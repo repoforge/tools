@@ -9,7 +9,7 @@ NAME=`basename $1 .spec`
 SDIR=/home/cmr/redhat/SOURCES
 USER="Christoph Maser <cmr@financial.com>"
 
-URL=$(grep "^Source: *" $1 | sed -e 's/^Source: //' -e "s/%{version}/${VERSION}/g")
+URL=$(grep "^Source: *" $1 | sed -e 's/^Source: //' -e "s/%{version}/${VERSION}/g" -e "s/%{name}/${NAME}/g")
 FILE=`basename $URL`
 wget -c $URL -O $SDIR/$FILE 
 
