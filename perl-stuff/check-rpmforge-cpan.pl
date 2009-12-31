@@ -104,6 +104,9 @@ my $ignore = { 'perl-Yahoo-Photos' => 'ignore',
 				'perl-WebService-MusicBrainz' => 'ignore', # Requires: perl(XML::LibXML) >= 1.63 really..
 				'perl-Test-Class' => 'ignore', # Requires perl(Test::Simple) >= 0.78
 				'perl-XML-Compile' => 'ignore', # req XML::Compile::Tester which requires new Sys::Log
+				'perl-Date-Manip' => 'ignore', # needs perl 5.10+
+				'perl-Lemonldap-NG-Common' => 'ignore', # until 64bit lasso build is fixed
+				'perl-Lemonldap-NG-Portal' => 'ignore', # until 64bit lasso build is fixed
 
 	 };
 
