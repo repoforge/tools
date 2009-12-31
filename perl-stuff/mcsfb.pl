@@ -25,10 +25,28 @@ my $package_name = $module->package_name();
 if ( $name ne $package_name) { die "Given Name does not match package name\nSeareched for $name but found $package_name\n"; };
 
 my $yaml_url = "http://search.cpan.org/src/" . $module->author->cpanid . "/" . $name . "-" . $module->package_version . "/META.yml";
-print "$yaml_url\n";
-
 my $yaml_file = get($yaml_url);
 my $results = Load($yaml_file);
+
+
+print "# \$Id\$\n";
+print "# Upstream: " . $module->author->author . " <" . $module->author->email .">\n";
+print "\n";
+print '%define perl_vendorlib %(eval "`%{__perl} -V:installvendorlib`"; echo $installvendorlib)'."\n";
+print '%define perl_vendorarch %(eval "`%{__perl} -V:installvendorarch`"; echo $installvendorarch)'."\n";
+print "%define real_name $name\n";
+print "\n";
+print "Summary: " . $module->description . "\n";
+print "Name: perl-$name\n";
+print "Version: " . $module->package_version ."\n";
+print "Release: 1%{?dist}\n";
+print "License: ". $results->{'license'} ."\n";
+print "Group: Applications/CPAN\n";
+print "URL: http://search.cpan.org/dist/$name\n";
+print "\n";
+print "Source: http://search.cpan.org/CPAN/" . $module->path . "/" . $name . "-%{version}.tar.gz\n";
+print "BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root\n";
+print "\n";
 
 
 # Merge build_requires and requires in one hash
