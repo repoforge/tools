@@ -26,6 +26,7 @@ if ( $name ne $package_name) { die "Given Name does not match package name\nSear
 
 my $yaml_url = "http://search.cpan.org/src/" . $module->author->cpanid . "/" . $name . "-" . $module->package_version . "/META.yml";
 my $yaml_file = get($yaml_url);
+print "DEBUG: $yaml_url\n";
 my $results = Load($yaml_file);
 
 
