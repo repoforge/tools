@@ -107,6 +107,10 @@ my $ignore = { 'perl-Yahoo-Photos' => 'ignore',
 				'perl-Date-Manip' => 'ignore', # needs perl 5.10+
 				'perl-Lemonldap-NG-Common' => 'ignore', # until 64bit lasso build is fixed
 				'perl-Lemonldap-NG-Portal' => 'ignore', # until 64bit lasso build is fixed
+				'perl-CGI-Debug' => 'ignore', # version
+				'perl-CPANPLUS-Dist-RPM' => 'ignore', # version
+				'perl-Calendar-Simple' => 'ignore', # version
+				'perl-Apache-Session' => 'ignore', # unauthorized release
 
 	 };
 
