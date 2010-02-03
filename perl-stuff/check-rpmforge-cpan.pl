@@ -111,6 +111,9 @@ my $ignore = { 'perl-Yahoo-Photos' => 'ignore',
 				'perl-CPANPLUS-Dist-RPM' => 'ignore', # version
 				'perl-Calendar-Simple' => 'ignore', # version
 				'perl-Apache-Session' => 'ignore', # unauthorized release
+				'perl-WWW-Bugzilla' => 'ignore', # current version does not install anything
+				'perl-Async-Group' => 'ignore', # show 1.2 instead of 0.3
+				'perl-Mouse' => 'ignore', # does not compile
 
 	 };
 
@@ -132,7 +135,7 @@ foreach my $name (@rpmnames) {
 			if ( $cpan_version =~ m/v(.*)/ ) { $cpan_version = $1 };
 			$ok = "UPGRADE" if ( $cpan_version gt $localverison ); 
 			$ok = "OK" if ( $cpan_version eq "undef" ); 
-			printf("%-30.30s | Localversion: %s - %s | Cpanversion %s | %s \n",$cpan_name, $localverison, $release, $cpan_version, $ok);
+			printf("%-30.30s | Local: %-8.8s | Cpan %-8.8s | %s \n",$cpan_name, $localverison, $cpan_version, $ok);
 	}
 } 
 
