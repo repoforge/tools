@@ -36,5 +36,8 @@ echo $URL
 
 rpmbuild -bs $1 
 
-egrep "# ExcludeDist.*el4" $1 || mock -r rpmforge-el4-x86_64 -v   --disable-plugin=root_cache /home/cmr/redhat/SRPMS/${NAME}-${VERSION}-1.src.rpm
+egrep "# ExcludeDist.*el4" $1 || mock -r rpmforge-el4-x86_64 -v   --disable-plugin=root_cache /home/cmr/redhat/SRPMS/${NAME}-${VERSION}-${release}.src.rpm
 mock -r rpmforge-el5-x86_64 -v   --disable-plugin=root_cache /home/cmr/redhat/SRPMS/${NAME}-${VERSION}-${release}.src.rpm && svn diff
+
+echo "svn commit -m  \"Updated to version ${VERSION}.\""
+
