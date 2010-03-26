@@ -39,7 +39,7 @@ print '%define perl_vendorlib %(eval "`%{__perl} -V:installvendorlib`"; echo $in
 print '%define perl_vendorarch %(eval "`%{__perl} -V:installvendorarch`"; echo $installvendorarch)'."\n";
 print "%define real_name $name\n";
 print "\n";
-print "Summary: " . $module->description . "\n";
+print "Summary: " . $results->{'abstract'} . "\n";
 print "Name: perl-$name\n";
 print "Version: " . $module->package_version ."\n";
 print "Release: 1%{?dist}\n";
@@ -105,3 +105,4 @@ print "%filter_setup\n";
 #                }
 #}
 
+print 
