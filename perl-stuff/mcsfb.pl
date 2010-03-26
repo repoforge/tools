@@ -22,11 +22,13 @@ my $module = $cb->parse_module( module => $name ) or die "Cannot make a module o
 
 my $package_name = $module->package_name();
 
-if ( $name ne $package_name) { die "Given Name does not match package name\nSeareched for $name but found $package_name\n"; };
+if ( lc($name) ne lc($package_name)) { die "Given Name does not match package name\nSeareched for $name but found $package_name\n"; };
 
+my $json_url = "http://search.cpan.org/src/" . $module->author->cpanid . "/" . $name . "-" . $module->package_version . "/META.json";
 my $yaml_url = "http://search.cpan.org/src/" . $module->author->cpanid . "/" . $name . "-" . $module->package_version . "/META.yml";
-my $yaml_file = get($yaml_url);
-print "DEBUG: $yaml_url\n";
+my $yaml_file;
+$yaml_file = get($json_url) or $yaml_file = get($yaml_url);
+print "DEBUG: $yaml_file\n";
 my $results = Load($yaml_file);
 
 
@@ -59,6 +61,7 @@ while ( my ($k,$v) = each(%{$results->{'requires'}}) ) {
     $merged{$k} = $v;
 }
 
+
 # Print BuildRequires
 foreach my $key (sort keys %merged )  {
 		if ( $key eq "perl" ) {
@@ -84,6 +87,7 @@ foreach my $key (sort keys %{$results->{'requires'}} )  {
 			print "\n";
 		}
 }
+
 
 print "\n%filter_from_requires /^perl*/d\n";
 print "%filter_setup\n";
