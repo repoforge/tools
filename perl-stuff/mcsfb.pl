@@ -8,6 +8,9 @@ use CPAN::FindDependencies;
 use Data::Dumper;
 use LWP::Simple;
 
+use POSIX;
+
+
 #use YAML::Tiny;
 use YAML::Syck;
 use version;
@@ -49,6 +52,7 @@ print "URL: http://search.cpan.org/dist/$name\n";
 print "\n";
 print "Source: http://search.cpan.org/CPAN/" . $module->path . "/" . $name . "-%{version}.tar.gz\n";
 print "BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root\n";
+print "BuildArch: noarch\n";
 print "\n";
 
 
@@ -105,4 +109,48 @@ print "%filter_setup\n";
 #                }
 #}
 
-print 
+my $class = $ARGV[0];
+$class =~ s/::/\//g;
+
+$class = $class . ".pm";
+
+print "\n";
+print "\n";
+print "%description\n";
+print "\n";
+print "%prep\n";
+print "%setup -n %{real_name}-%{version}\n";
+print "\n";
+print "%build\n";
+print "%{__perl} Makefile.PL INSTALLDIRS=\"vendor\" PREFIX=\"%{buildroot}%{_prefix}\"\n";
+print "%{__make} %{?_smp_mflags}\n";
+print "%{__make} %{?_smp_mflags} man\n";
+print "\n";
+print "%install\n";
+print "%{__rm} -rf %{buildroot}\n";
+print "%{__make} pure_install\n";
+print "\n";
+print "### Clean up buildroot\n";
+print "find %{buildroot} -name .packlist -exec %{__rm} {} \\;\n";
+print "\n";
+print "%clean\n";
+print "%{__rm} -rf %{buildroot}\n";
+print "\n";
+print "%files\n";
+print "%defattr(-, root, root, 0755)\n";
+print "%doc Changes MANIFEST META.yml README\n";
+print "%doc %{_mandir}/man3/$ARGV[0].3pm*\n";
+print "%dir %{perl_vendorlib}/\n";
+print "%{perl_vendorlib}/$class\n";
+print "\n";
+print "%changelog\n";
+
+setlocale(LC_ALL, "en_US");
+my $dayname=strftime ("%A", gmtime);
+$dayname=substr($dayname,0,3);
+my $day=strftime ("%d", gmtime);
+my $mon=strftime ("%b", gmtime);
+my $year=strftime ("%Y", gmtime);
+
+print "* $dayname $mon $day $year Christoph Maser <cmr.financial.com> - " . $module->package_version . "-1\n";
+print "- initial package\n";
