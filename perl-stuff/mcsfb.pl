@@ -124,7 +124,7 @@ print "\n";
 print "%build\n";
 print "%{__perl} Makefile.PL INSTALLDIRS=\"vendor\" PREFIX=\"%{buildroot}%{_prefix}\"\n";
 print "%{__make} %{?_smp_mflags}\n";
-print "%{__make} %{?_smp_mflags} man\n";
+print "%{__make} %{?_smp_mflags} test\n";
 print "\n";
 print "%install\n";
 print "%{__rm} -rf %{buildroot}\n";
