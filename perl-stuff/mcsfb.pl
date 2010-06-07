@@ -152,5 +152,5 @@ my $day=strftime ("%d", gmtime);
 my $mon=strftime ("%b", gmtime);
 my $year=strftime ("%Y", gmtime);
 
-print "* $dayname $mon $day $year Christoph Maser <cmr.financial.com> - " . $module->package_version . "-1\n";
+print "* $dayname $mon $day $year Christoph Maser <cmaser.gmx.de> - " . $module->package_version . "-1\n";
 print "- initial package\n";
