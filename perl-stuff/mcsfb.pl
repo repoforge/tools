@@ -4,15 +4,11 @@
 use strict;
 
 use CPANPLUS::Backend;
-use CPAN::FindDependencies;
+use CPAN::Meta;
 use Data::Dumper;
 use LWP::Simple;
 
 use POSIX;
-
-
-#use YAML::Tiny;
-use YAML::Syck;
 use version;
 
 
@@ -30,10 +26,19 @@ if ( lc($name) ne lc($package_name)) { die "Given Name does not match package na
 my $json_url = "http://search.cpan.org/src/" . $module->author->cpanid . "/" . $name . "-" . $module->package_version . "/META.json";
 my $yaml_url = "http://search.cpan.org/src/" . $module->author->cpanid . "/" . $name . "-" . $module->package_version . "/META.yml";
 my $yaml_file;
-$yaml_file = get($json_url) or $yaml_file = get($yaml_url);
-print "DEBUG: $yaml_file\n";
-my $results = Load($yaml_file);
+my $meta;
+if ( $yaml_file = get($json_url) ) {
+	$meta = CPAN::Meta->load_json_string($yaml_file);
+} else {
+	$yaml_file = get($yaml_url);
+	$meta = CPAN::Meta->load_yaml_string($yaml_file);
+}
 
+my $prereqs = $meta->effective_prereqs;
+
+my $result = $prereqs->as_string_hash;
+
+print Dumper($meta->{license});
 
 print "# \$Id\$\n";
 print "# Upstream: " . $module->author->author . " <" . $module->author->email .">\n";
@@ -42,11 +47,11 @@ print '%define perl_vendorlib %(eval "`%{__perl} -V:installvendorlib`"; echo $in
 print '%define perl_vendorarch %(eval "`%{__perl} -V:installvendorarch`"; echo $installvendorarch)'."\n";
 print "%define real_name $name\n";
 print "\n";
-print "Summary: " . $results->{'abstract'} . "\n";
+print "Summary: " . $meta->{abstract} . "\n";
 print "Name: perl-$name\n";
 print "Version: " . $module->package_version ."\n";
 print "Release: 1%{?dist}\n";
-print "License: ". $results->{'license'} ."\n";
+print "License: ".  $meta->{license}[0]  ."\n";
 print "Group: Applications/CPAN\n";
 print "URL: http://search.cpan.org/dist/$name\n";
 print "\n";
@@ -58,15 +63,28 @@ print "\n";
 
 # Merge build_requires and requires in one hash
 my %merged = ();
-while ( my ($k,$v) = each(%{$results->{'build_requires'}}) ) {
+while ( my ($k,$v) = each(%{$result->{configure}->{requires}}) ) {
     $merged{$k} = $v;
 }
-while ( my ($k,$v) = each(%{$results->{'requires'}}) ) {
+while ( my ($k,$v) = each(%{$result->{build}->{requires}}) ) {
+    $merged{$k} = $v;
+}
+while ( my ($k,$v) = each(%{$result->{runtime}->{requires}}) ) {
     $merged{$k} = $v;
 }
 
 
 # Print BuildRequires
+foreach my $key (sort keys %{$result->{test}->{requires}} )  {
+	print "BuildRequires: perl($key)";
+	if ( $result->{test}->{requires}{$key} != 0 ) {
+		print  " >= " . $result->{test}->{requires}{$key}
+	}
+	print "  # test dependency\n";
+}
+
+
+
 foreach my $key (sort keys %merged )  {
 		if ( $key eq "perl" ) {
 			print "BuildRequires: $key >= " . $merged{$key} . "\n";
@@ -80,13 +98,13 @@ foreach my $key (sort keys %merged )  {
 }
 
 # Print Requires
-foreach my $key (sort keys %{$results->{'requires'}} )  {
+foreach my $key (sort keys %{$result->{runtime}->{requires}} )  {
 		if ( $key eq "perl" ) {
-			print "Requires: $key >= " .$results->{'requires'}{$key} . "\n";
+			print "Requires: $key >= " .$result->{runtime}->{'requires'}{$key} . "\n";
 		} else {
 			print "Requires: perl($key)";
-			if ( $results->{'requires'}{$key} != 0 ) {
-					print  " >= " . $results->{'requires'}{$key};
+			if ( $result->{runtime}->{'requires'}{$key} != 0 ) {
+					print  " >= " . $result->{runtime}->{'requires'}{$key};
 			}  
 			print "\n";
 		}
@@ -97,18 +115,6 @@ print "\n%filter_from_requires /^perl*/d\n";
 print "%filter_setup\n";
 
 
-#foreach my $key (sort keys %{$results->{'recommends'}} )  {
-#                if ( $key eq "perl" ) {
-#                        print "BuildRequires: $key >= " .$results->{'recommends'}{$key} . "\n";
-#                } else {
-#                        print "BuildRequires: perl($key)";
-#                        if ( $results->{'requires'}{$key} != 0 ) {
-#                                        print  " >= " . $results->{'recomemnds'}{$key};
-#                        }
-#                        print "\n";
-#                }
-#}
-
 my $class = $ARGV[0];
 $class =~ s/::/\//g;
 
@@ -117,6 +123,7 @@ $class = $class . ".pm";
 print "\n";
 print "\n";
 print "%description\n";
+print $meta->{description} ."\n";
 print "\n";
 print "%prep\n";
 print "%setup -n %{real_name}-%{version}\n";
