@@ -1,14 +1,28 @@
 #!/bin/sh
 set -e
 
+if [ -f ~/.rpmforge-config ] 
+then
+	. ~/.rpmforge-config
+else
+	echo "Create a file ~/.rpmforge-config with values for TOPDIR, SDIR, USER, MOCKCFG, MOCKRES"
+	exit 1	
+fi
+
+if [ $# -ne 2 ]
+then
+  echo "Usage: `basename $0` spec-file version-number"
+  exit 1
+fi
+
+
 export LANG=C
 DATE=$(date "+%a %b %e %Y")
 VERSION=$2
 RPMVERSION=`grep  ^Version: $1 | cut -d  ' ' -f 2`
 OUTPUT=$1.new
 NAME=`basename $1 .spec` 
-SDIR=/home/cmr/redhat/SOURCES
-USER="Christoph Maser <cmr@financial.com>"
+
 
 URL=$(grep "^Source: *" $1 | sed -e 's/^Source: //' -e "s/%{version}/${VERSION}/g" -e "s/%{name}/${NAME}/g")
 FILE=`basename $URL`
@@ -34,10 +48,9 @@ echo $URL
 
 
 
-rpmbuild -bs $1 
+rpmbuild --define "_topdir $TOPDIR" -bs $1 
 
-egrep "# ExcludeDist.*el4" $1 || mock -r rpmforge-el4-x86_64 -v   --disable-plugin=root_cache /home/cmr/redhat/SRPMS/${NAME}-${VERSION}-${release}.src.rpm
-mock -r rpmforge-el5-x86_64 -v   --disable-plugin=root_cache /home/cmr/redhat/SRPMS/${NAME}-${VERSION}-${release}.src.rpm && svn diff
+mock -v --resultdir=$MOCKRES  --configdir=$MOCKCFG -r rpmforge-el5-x86_64 --disable-plugin=root_cache  $TOPDIR/SRPMS/${NAME}-${VERSION}-${release}.src.rpm
 
 echo "svn commit -m  \"Updated to version ${VERSION}.\""
 
