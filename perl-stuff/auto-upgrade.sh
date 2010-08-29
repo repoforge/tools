@@ -1,4 +1,15 @@
 #!/bin/sh
+# To use this script you need to create a file ~/.rpmforge-config
+# it has to contain settings for the following variables:
+#
+## TOPDIR=$HOME/rpmforge-topdir
+## SDIR=$TOPDIR/SOURCES
+## USER="Jon Doe <jon.doe@foobar.com>"
+## MOCKCFG=$HOME/mock-config
+## MOCKRES=$HOME/mock-resdir
+#
+#
+
 set -e
 
 if [ -f ~/.rpmforge-config ] 
