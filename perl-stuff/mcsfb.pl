@@ -38,8 +38,6 @@ my $prereqs = $meta->effective_prereqs;
 
 my $result = $prereqs->as_string_hash;
 
-print Dumper($meta->{license});
-
 print "# \$Id\$\n";
 print "# Upstream: " . $module->author->author . " <" . $module->author->email .">\n";
 print "\n";
@@ -51,9 +49,9 @@ print "Summary: " . $meta->{abstract} . "\n";
 print "Name: perl-$name\n";
 print "Version: " . $module->package_version ."\n";
 print "Release: 1%{?dist}\n";
-print "License: ".  $meta->{license}[0]  ."\n";
+print "License: ".  &resolve_license($meta->{license}[0])  ."\n";
 print "Group: Applications/CPAN\n";
-print "URL: http://search.cpan.org/dist/$name\n";
+print "URL: http://search.cpan.org/dist/$name/\n";
 print "\n";
 print "Source: http://search.cpan.org/CPAN/" . $module->path . "/" . $name . "-%{version}.tar.gz\n";
 print "BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root\n";
@@ -111,7 +109,9 @@ foreach my $key (sort keys %{$result->{runtime}->{requires}} )  {
 }
 
 
-print "\n%filter_from_requires /^perl*/d\n";
+print "\n";
+print "### remove autoreq Perl dependencies\n";
+print "%filter_from_requires /^perl.*/d\n";
 print "%filter_setup\n";
 
 
@@ -137,9 +137,6 @@ print "%install\n";
 print "%{__rm} -rf %{buildroot}\n";
 print "%{__make} pure_install\n";
 print "\n";
-print "### Clean up buildroot\n";
-print "find %{buildroot} -name .packlist -exec %{__rm} {} \\;\n";
-print "\n";
 print "%clean\n";
 print "%{__rm} -rf %{buildroot}\n";
 print "\n";
@@ -149,6 +146,7 @@ print "%doc Changes MANIFEST META.yml README\n";
 print "%doc %{_mandir}/man3/$ARGV[0].3pm*\n";
 print "%dir %{perl_vendorlib}/\n";
 print "%{perl_vendorlib}/$class\n";
+print "%exclude %{perl_vendorarch}/auto/*/.packlist\n";
 print "\n";
 print "%changelog\n";
 
@@ -161,3 +159,18 @@ my $year=strftime ("%Y", gmtime);
 
 print "* $dayname $mon $day $year Christoph Maser <cmaser.gmx.de> - " . $module->package_version . "-1\n";
 print "- initial package\n";
+
+
+sub resolve_license() {
+
+	my $input = shift;
+	my %license = (
+		'perl_5' => 'Artistic/GPL' ,
+	);
+	
+	if ( defined $license{$input} ) {
+		return $license{$input};
+	} else {
+		return $input;
+	}
+}
