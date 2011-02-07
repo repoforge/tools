@@ -114,6 +114,8 @@ my $ignore = { 'perl-Yahoo-Photos' => 'ignore',
 				'perl-WWW-Bugzilla' => 'ignore', # current version does not install anything
 				'perl-Async-Group' => 'ignore', # show 1.2 instead of 0.3
 				'perl-Mouse' => 'ignore', # does not compile
+				'perl-XML-CanonicalizeXML' => 'ignore', # inofficial releas
+				'perl-WWW-Mechanize-Cached' => 'ignore', # ExtUtils::MakeMaker version 6.31 required--this is only version 6.30
 
 	 };
 
