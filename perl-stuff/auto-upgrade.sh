@@ -20,7 +20,7 @@ else
 	exit 1	
 fi
 
-if [ $# -ne 2 ]
+if [ $# -lt 2 ]
 then
   echo "Usage: `basename $0` spec-file version-number"
   exit 1
@@ -38,7 +38,8 @@ NAME=`basename $1 .spec`
 URL=$(grep "^Source: *" $1 | sed -e 's/^Source: //' -e "s/%{version}/${VERSION}/g" -e "s/%{name}/${NAME}/g")
 FILE=`basename $URL`
 
-wget -c $URL -O $SDIR/$FILE 
+echo "Running: wget -c $URL -O $SDIR/$FILE"
+wget -c $URL -O $SDIR/$FILE
 
 grep real_version $1 && exit
 
