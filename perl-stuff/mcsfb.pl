@@ -20,11 +20,12 @@ my $cb      = CPANPLUS::Backend->new or die loc("Could not create new CPANPLUS::
 my $module = $cb->parse_module( module => $name ) or die "Cannot make a module object out of $name\n";
 
 my $package_name = $module->package_name();
+#print Dumper($package_name);
 
 if ( lc($name) ne lc($package_name)) { die "Given Name does not match package name\nSeareched for $name but found $package_name\n"; };
 
-my $json_url = "http://search.cpan.org/src/" . $module->author->cpanid . "/" . $name . "-" . $module->package_version . "/META.json";
-my $yaml_url = "http://search.cpan.org/src/" . $module->author->cpanid . "/" . $name . "-" . $module->package_version . "/META.yml";
+my $json_url = "http://search.cpan.org/src/" . $module->author->cpanid . "/" . $package_name . "-" . $module->package_version . "/META.json";
+my $yaml_url = "http://search.cpan.org/src/" . $module->author->cpanid . "/" . $package_name . "-" . $module->package_version . "/META.yml";
 my $yaml_file;
 my $meta;
 if ( $yaml_file = get($json_url) ) {
@@ -53,7 +54,7 @@ print "License: ".  &resolve_license($meta->{license}[0])  ."\n";
 print "Group: Applications/CPAN\n";
 print "URL: http://search.cpan.org/dist/$name/\n";
 print "\n";
-print "Source: http://search.cpan.org/CPAN/" . $module->path . "/" . $name . "-%{version}.tar.gz\n";
+print "Source: http://search.cpan.org/CPAN/" . $module->path . "/" . $package_name . "-%{version}.tar.gz\n";
 print "BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root\n";
 print "BuildArch: noarch\n";
 print "\n";
